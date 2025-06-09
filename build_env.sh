@@ -3,7 +3,8 @@
 # to write requirements.txt
 function write_requirements() {
     pip freeze > requirements.txt
-    echo "requirements.txt has been created with the current environment's packages."
+    conda list --explicit > environment.yml
+    echo "requirements.txt and evironment.yml have been created with the current environment's packages."
 }
 
 # write_requirements # uncomment to run
