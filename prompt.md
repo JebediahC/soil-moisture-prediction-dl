@@ -37,7 +37,8 @@
 
 ## Virtualization
 data format(after preprocessing)：
-- shape: 370(latitude 37° and 0.1° resolution)×700(longitude 70° and 0.1° resolution)×4(4 parameters)×10(10 days input window and )
+- shape: 371(latitude 37° and 0.1° resolution)×701(longitude 70° and 0.1° resolution)×4(4 parameters)×10(10 days input window and )
+- raw data's format(hourly, averaging to daily needed) is as [dateset format](#dataset-format)
 
 Display maps for each layer
 
@@ -51,19 +52,48 @@ Load model
 ## Prediction
 input: 
 data format(after preprocessing)：
-- shape: 370(latitude 37° and 0.1° resolution)×700(longitude 70° and 0.1° resolution)×4(4 parameters)×10(10 days input window and )
+- shape: 371(latitude 37° and 0.1° resolution)×701(longitude 70° and 0.1° resolution)×4(4 parameters)×10(10 days input window and )
+- raw data's format(hourly, averaging to daily needed) is as [dateset format](#dataset-format)
 
 
 ## Evaluation
+As a demo or test, please select 2 moments of swvl1 data from the raw dateset with 1 day offset(such as 2020-01-15T12:00:00 and 2020-01-15T12:00:00), and compare the 2 moments as the (fake) ground true and prediction, and calculate the Evaluation Metrics and virtualize the error heatmap.
+
 use this Evaluation Metrics to evaluate the accuracy:
 - RMSE
 - R2
 - MAE
 - MSE
 
-display maps to virtualize the layer
+data format: refer as raw data's format(hourly, averaging to daily needed) is as [dateset format](#dataset-format)
+
+And lay the foundation for continuous expansion in the future.
 
 ## Reference
+
+### dataset format
+```
+<xarray.Dataset> Size: 3GB
+Dimensions:     (valid_time: 744, latitude: 371, longitude: 701)
+Coordinates:
+    number      int64 8B ...
+  * valid_time  (valid_time) datetime64[ns] 6kB 2020-01-01 ... 2020-01-31T23:...
+  * latitude    (latitude) float64 3kB 72.0 71.9 71.8 71.7 ... 35.2 35.1 35.0
+  * longitude   (longitude) float64 6kB -25.0 -24.9 -24.8 ... 44.8 44.9 45.0
+    expver      (valid_time) <U4 12kB ...
+Data variables:
+    swvl1       (valid_time, latitude, longitude) float32 774MB ...
+    ro          (valid_time, latitude, longitude) float32 774MB ...
+    e           (valid_time, latitude, longitude) float32 774MB ...
+    tp          (valid_time, latitude, longitude) float32 774MB ...
+Attributes:
+    GRIB_centre:             ecmf
+    GRIB_centreDescription:  European Centre for Medium-Range Weather Forecasts
+    GRIB_subCentre:          0
+    Conventions:             CF-1.7
+    institution:             European Centre for Medium-Range Weather Forecasts
+    history:                 2025-05-11T20:16 GRIB to CDM+CF via cfgrib-0.9.1...
+```
 
 ### Download data from CDS(Climate Data Store) API
 
@@ -107,68 +137,7 @@ client.retrieve(dataset, request).download()
 
 ### Preprocess data
 
-```python
-import os
-os.environ['PROJ_LIB'] = r"E:\anaconda3\envs\era5env\Library\share\proj"
+```pseudo
+# some pseudo code needed here
 
-import xarray as xr
-import rioxarray
-import numpy as np
-
-input_folder = r"F:\ESPACE\seminar\data"
-output_folder = r"F:\ESPACE\seminar\tif_monthly"
-os.makedirs(output_folder, exist_ok=True)
-
-# 遍历每月 .nc 文件
-for filename in sorted(os.listdir(input_folder)):
-    if filename.endswith(".nc"):
-        print(f"\n📦 Processing {filename} ...")
-        file_path = os.path.join(input_folder, filename)
-        ds = xr.open_dataset(file_path)
-        if 'valid_time' in ds.dims:
-            ds = ds.rename({'valid_time': 'time'})
-        # 日尺度变量处理
-        sm = ds['swvl1'].resample(time='1D').mean()
-        precip = ds['tp'].resample(time='1D').sum()
-        evap = ds['e'].resample(time='1D').sum()
-        runoff = ds['ro'].resample(time='1D').sum()
-
-        # 要输出的变量字典
-        variables = {
-            'soil': sm,
-            'precip': precip,
-            'evap': evap,
-            'runoff': runoff
-        }
-
-        for varname, var in variables.items():
-            # 生成多波段 tif：每个 time 为一个波段
-            bands = []
-            for t in var.time:
-                da = var.sel(time=t)
-                da.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude", inplace=True)
-                da.rio.write_crs("EPSG:4326", inplace=True)
-                bands.append(da.values[np.newaxis, :, :])  # 保留波段维度
-
-            # 合并为 3D ndarray：[bands, y, x]
-            data_3d = np.concatenate(bands, axis=0)
-
-            # 创建 DataArray 写入 tif
-            stacked = xr.DataArray(
-                data_3d,
-                dims=("band", "latitude", "longitude"),
-                coords={
-                    "band": np.arange(1, len(bands) + 1),
-                    "latitude": da.latitude,
-                    "longitude": da.longitude
-                }
-            )
-            stacked.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude", inplace=True)
-            stacked.rio.write_crs("EPSG:4326", inplace=True)
-
-            # 构建输出路径
-            base_name = filename.replace(".nc", "")  # e.g. 2020-1
-            out_path = os.path.join(output_folder, f"{varname}_{base_name}.tif")
-            stacked.rio.to_raster(out_path)
-            print(f"✅ Saved {out_path}")
 ```
