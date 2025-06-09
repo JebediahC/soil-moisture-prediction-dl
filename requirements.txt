@@ -1,0 +1,9 @@
+cdsapi
+xarray
+rioxarray
+numpy
+matplotlib
+scikit-learn
+# torch          # 如果你用 PyTorch 训练或推理
+# pyyaml         # 用于读取config.yaml
+# tqdm           # 如果你想用进度条

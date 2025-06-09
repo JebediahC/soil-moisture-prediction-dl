@@ -1,1 +1,11 @@
 model: empty_model
+per_year_outputs_path: "/mnt/c/Users/jebediahc/OneDrive/鱼丸车仔/TUM-before-arrival/Project\ Earth\ Observation\ Data\ Analysis/Project-files-Soil-Moisture/per_year_outputs/"
+date: "2020-01-15"
+
+raw_path: "data/raw"
+processed_path: "data/processed"
+
+
+demo_path: "data/demo"
+demo_nc_path: "data/demo/2020-1.nc"
+demo_datetime: "2020-01-01T12:00:00"
