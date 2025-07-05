@@ -1,4 +1,7 @@
 data/*
 
 src/__pycache__/
-.vscode/settings.json
+.vscode/
+soil_conv_lstm-2.pth
+soil_conv_lstm.pth
+logs/*
