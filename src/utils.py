@@ -1,5 +1,7 @@
 import yaml
 
+DEBUG = True  # Set this to True to enable debug logs
+
 def load_config():
     """Load configuration from YAML file."""
     try:
@@ -16,10 +18,11 @@ def load_config():
 class Logger:
     """Simple logger class to handle logging messages."""
 
-    def __init__(self, name="Logger", log_path=None, to_console=True):
+    def __init__(self, name="Logger", log_path=None, to_console=True, debug=DEBUG):
         self.name = name
         self.log_path = log_path
         self.to_console = to_console
+        self.debug = debug
         if log_path:
             self.log_file = open(log_path, "a")
         else:
@@ -58,13 +61,14 @@ class Logger:
         self._log(f"[ERROR] {message}")
 
     def debug(self, message):
-        self._log(f"[DEBUG] {message}")
+        if self.debug:
+            self._log(f"[DEBUG] {message}")
 
 class SimpleLogger(Logger):
     """A simple logger that extends the Logger class."""
 
-    def __init__(self, name="SimpleLogger", log_path=None, to_console=True):
-        super().__init__(name, log_path=log_path, to_console=to_console)
+    def __init__(self, name="SimpleLogger", log_path=None, to_console=True, debug=DEBUG):
+        super().__init__(name, log_path=log_path, to_console=to_console, debug=debug)
 
     def log(self, message):
         self.info(message)

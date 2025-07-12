@@ -36,27 +36,10 @@ VAR_MAP = {
 # --- STEP 1: PROCESS & SAVE DAILY AVERAGED FILES ---
 
 
-def process_month_to_daily_mean(month_str):
-    input_path = os.path.join(config["raw_folder"], f"{month_str}.nc")
-    output_path = os.path.join(config["intermediate_folder"], f"{month_str}.npy")
-    ds = xr.open_dataset(input_path)
-    var_stack = []
 
-    for var in config["use_channels"]:
-        var_data = ds[VAR_MAP[var]].values  # (time, lat, lon)
-        total_hours = var_data.shape[0]
-        days = total_hours // 24
-        daily_data = var_data[:days * 24].reshape(days, 24, *var_data.shape[1:]).mean(axis=1)  # (days, lat, lon)
-        daily_data = np.nan_to_num(daily_data, nan=0.0)
-        var_stack.append(daily_data)
 
-    daily_array = np.stack(var_stack, axis=-1)  # (days, lat, lon, channels)
-    # daily_array = np.transpose(daily_array, (1, 2, 0, 3))  # to (lat, lon, days, channels)
-    np.save(output_path, daily_array)
-    log_msg = f"Saved daily mean to {output_path} shape={daily_array.shape}"
-    logger.info(log_msg)
-if __name__ == "__main__":
-    months = config["months"]
-    for month in months:
-        process_month_to_daily_mean(month)
+
+
+
+
 

@@ -1,4 +1,4 @@
-import utils
+from . import utils
 import matplotlib.pyplot as plt
 import os
 import pyarrow.parquet as pq
@@ -47,10 +47,6 @@ VARS = ["swvl1", "ro", "tp", "e"]
 #     plt.show()
 
 class Visualizer:
-    """
-    General visualization tools for soil moisture and related variables.
-    """
-
     def __init__(self, lat=None, lon=None, var_names=None):
         """
         lat, lon: 1D or 2D arrays for latitude and longitude
@@ -146,3 +142,106 @@ class Visualizer:
         plt.show()
 
 
+class ArrayInfoDisplayer:
+    """
+    Utility to log basic info for numpy arrays: shape, dtype, min, max, mean, std.
+    """
+
+    def __init__(self, logger):
+        """
+        logger: a logging.Logger instance or similar object with .info() method
+        """
+        self.logger = logger
+
+    def print_info(self, arr, name="Array"):
+        """
+        Log info about the numpy array.
+        """
+        if arr is None:
+            self.logger.info(f"{name}: None")
+            return
+        self.logger.info(f"{name} info:")
+        self.logger.info(f"  shape: {arr.shape}")
+        self.logger.info(f"  dtype: {arr.dtype}")
+        self.logger.info(f"  min: {np.nanmin(arr):.4f}, max: {np.nanmax(arr):.4f}")
+        self.logger.info(f"  mean: {np.nanmean(arr):.4f}, std: {np.nanstd(arr):.4f}")
+
+    def animate_tensor_sample(self, x, y, lat=None, lon=None, interval=500, save_path=None, channel_index=0):
+        """
+        Display the whole input and output period as a video to show the changing.
+        x: (input_days, C, H, W)
+        y: (predict_days, 1 or C, H, W)
+        interval: delay between frames in ms
+        save_path: if provided, save the animation to this path (e.g., 'output.mp4' or 'output.gif')
+        channel_index: which channel to display (default 0)
+        """
+        import matplotlib.animation as animation
+        lat = lat if lat is not None else self.lat
+        lon = lon if lon is not None else self.lon
+        input_days = x.shape[0]
+        output_days = y.shape[0]
+
+        def get_var_label():
+            if self.var_names and channel_index < len(self.var_names):
+                return self.var_names[channel_index]
+            return f"Var {channel_index}"
+
+        # Helper to animate a sequence
+        def animate_sequence(frames, titles, vmin=None, vmax=None):
+            fig = plt.figure(figsize=(10, 5))
+            ax = plt.axes(projection=ccrs.PlateCarree())
+            im = ax.pcolormesh(lon, lat, frames[0], cmap='YlGnBu', shading='auto', vmin=vmin, vmax=vmax)
+            ax.coastlines()
+            ax.add_feature(cfeature.BORDERS)
+            cb = plt.colorbar(im, orientation='vertical', label=get_var_label())
+            title = ax.set_title(titles[0])
+
+            def update(frame_idx):
+                im.set_array(frames[frame_idx].ravel())
+                title.set_text(titles[frame_idx])
+                return [im, title]
+
+            ani = animation.FuncAnimation(fig, update, frames=len(frames), interval=interval, blit=False)
+            plt.tight_layout()
+            if save_path:
+                plt.close(fig)
+                return ani
+            else:
+                plt.close(fig)
+                return ani
+
+        # Prepare frames for input and output
+        input_frames = []
+        input_titles = []
+        for t in range(input_days):
+            data = np.transpose(x[t], (1, 2, 0))
+            input_frames.append(data[..., channel_index])
+            input_titles.append(f"Input day {t+1}")
+
+        output_frames = []
+        output_titles = []
+        for t in range(output_days):
+            data = np.transpose(y[t], (1, 2, 0))
+            # If output only has 1 channel, always use channel 0
+            if data.shape[-1] == 1:
+                output_frames.append(data[..., 0])
+            else:
+                output_frames.append(data[..., channel_index])
+            output_titles.append(f"Target day {t+1}")
+
+        if channel_index == 0:
+            # Combine input and output for same scale
+            all_frames = input_frames + output_frames
+            all_titles = input_titles + output_titles
+            vmin = np.nanmin([np.nanmin(f) for f in all_frames])
+            vmax = np.nanmax([np.nanmax(f) for f in all_frames])
+            return animate_sequence(all_frames, all_titles, vmin, vmax)
+        else:
+            # Display input and output separately (scales may differ)
+            vmin_in = np.nanmin([np.nanmin(f) for f in input_frames])
+            vmax_in = np.nanmax([np.nanmax(f) for f in input_frames])
+            vmin_out = np.nanmin([np.nanmin(f) for f in output_frames])
+            vmax_out = np.nanmax([np.nanmax(f) for f in output_frames])
+            ani_in = animate_sequence(input_frames, input_titles, vmin_in, vmax_in)
+            ani_out = animate_sequence(output_frames, output_titles, vmin_out, vmax_out)
+            return ani_in, ani_out
