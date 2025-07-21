@@ -141,31 +141,6 @@ class Visualizer:
         plt.tight_layout()
         plt.show()
 
-
-class ArrayInfoDisplayer:
-    """
-    Utility to log basic info for numpy arrays: shape, dtype, min, max, mean, std.
-    """
-
-    def __init__(self, logger):
-        """
-        logger: a logging.Logger instance or similar object with .info() method
-        """
-        self.logger = logger
-
-    def print_info(self, arr, name="Array"):
-        """
-        Log info about the numpy array.
-        """
-        if arr is None:
-            self.logger.info(f"{name}: None")
-            return
-        self.logger.info(f"{name} info:")
-        self.logger.info(f"  shape: {arr.shape}")
-        self.logger.info(f"  dtype: {arr.dtype}")
-        self.logger.info(f"  min: {np.nanmin(arr):.4f}, max: {np.nanmax(arr):.4f}")
-        self.logger.info(f"  mean: {np.nanmean(arr):.4f}, std: {np.nanstd(arr):.4f}")
-
     def animate_tensor_sample(self, x, y, lat=None, lon=None, interval=500, save_path=None, channel_index=0):
         """
         Display the whole input and output period as a video to show the changing.
@@ -245,3 +220,46 @@ class ArrayInfoDisplayer:
             ani_in = animate_sequence(input_frames, input_titles, vmin_in, vmax_in)
             ani_out = animate_sequence(output_frames, output_titles, vmin_out, vmax_out)
             return ani_in, ani_out
+
+
+class ArrayInfoDisplayer:
+    """
+    Utility to log basic info for numpy arrays: shape, dtype, min, max, mean, std.
+    """
+
+    def __init__(self, logger):
+        """
+        logger: a logging.Logger instance or similar object with .info() method
+        """
+        self.logger = logger
+
+    def print_info(self, arr, name="Array"):
+        """
+        Log info about the numpy array.
+        """
+        if arr is None:
+            self.logger.info(f"{name}: None")
+            return
+        self.logger.info(f"{name} info:")
+        self.logger.info(f"  shape: {arr.shape}")
+        self.logger.info(f"  dtype: {arr.dtype}")
+        self.logger.info(f"  min: {np.nanmin(arr):.4f}, max: {np.nanmax(arr):.4f}")
+        self.logger.info(f"  mean: {np.nanmean(arr):.4f}, std: {np.nanstd(arr):.4f}")
+    
+    def downsample_channels(self, arr, target_hw=30):
+        """
+        对T,H,W,C的每个通道做邻近插值降分辨率到target_hw（边长），返回降分辨率后的ndarray，shape=(T, target_hw, target_hw, C)
+        """
+        T, H, W, C = arr.shape
+        # 计算缩放因子
+        scale_h = H // target_hw
+        scale_w = W // target_hw
+        if scale_h < 1 or scale_w < 1:
+            raise ValueError(f"原始分辨率太低，无法降到{target_hw}")
+        # 邻近插值：直接取每scale_h, scale_w步的像元
+        arr_down = arr[:, ::scale_h, ::scale_w, :]
+        # 若不是正好target_hw，裁剪
+        arr_down = arr_down[:, :target_hw, :target_hw, :]
+        self.logger.info(f"Downsampled array shape: {arr_down.shape}")
+        return arr_down
+
