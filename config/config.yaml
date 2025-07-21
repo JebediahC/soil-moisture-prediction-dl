@@ -22,7 +22,7 @@ months:
   - "2020-7"
 
 
-run_name: "test-2"
+run_name: "test-3"
 
 raw_folder: "data/raw"
 intermediate_folder: "data/processed"
@@ -33,5 +33,5 @@ use_channels:
   - "tp"
 input_days: 20
 predict_days: 10
-batch_size: 6
+batch_size: 4
 epochs: 100
