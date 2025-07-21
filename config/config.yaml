@@ -2,7 +2,7 @@ model: empty_model
 per_year_outputs_path: "/mnt/c/Users/jebediahc/OneDrive/鱼丸车仔/TUM-before-arrival/Project\ Earth\ Observation\ Data\ Analysis/Project-files-Soil-Moisture/per_year_outputs/"
 date: "2020-01-15"
 
-raw_path: "data/raw"
+raw_path: "please_specify_raw_path"
 processed_path: "data/processed"
 
 
@@ -22,7 +22,7 @@ months:
   - "2020-7"
 
 
-run_name: "test-3"
+run_name: "test-untiled"
 
 raw_folder: "data/raw"
 intermediate_folder: "data/processed"
@@ -33,5 +33,5 @@ use_channels:
   - "tp"
 input_days: 20
 predict_days: 10
-batch_size: 4
+batch_size: 0
 epochs: 100
