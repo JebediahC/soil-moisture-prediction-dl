@@ -25,6 +25,8 @@ class Logger:
         self.to_console = to_console
         self.debug = debug
         if log_path:
+            # Ensure the directory exists before opening the file
+            os.makedirs(os.path.dirname(log_path), exist_ok=True)
             mode = "a" if os.path.exists(log_path) else "w"
             self.log_file = open(log_path, mode)
         else:
