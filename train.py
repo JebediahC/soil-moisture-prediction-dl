@@ -16,7 +16,7 @@ import src.utils as utils
 
 config = utils.load_config()
 
-logger = SimpleLogger(name="Logger-main", log_path="logs/logger_main_private7.5.log")
+logger = SimpleLogger(name="Logger-main", log_path=config["log_path"])
 
 
 VAR_MAP = {

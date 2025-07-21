@@ -5,6 +5,7 @@ date: "2020-01-15"
 raw_path: "please_specify_raw_path"
 processed_path: "data/processed"
 
+log_path: "logs/logger_training.log"
 
 demo_path: "data/demo"
 demo_nc_path: "data/demo/2020-1.nc"
