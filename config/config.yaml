@@ -20,11 +20,10 @@ months:
   - "2020-5"
   - "2020-6"
   - "2020-7"
-  - "2020-8"
-  - "2020-9"
-  - "2020-10"
-  - "2020-11"
-  - "2020-12"
+
+
+run_name: "test-2"
+
 raw_folder: "data/raw"
 intermediate_folder: "data/processed"
 use_channels:
@@ -34,5 +33,5 @@ use_channels:
   - "tp"
 input_days: 20
 predict_days: 10
-batch_size: 4
-epochs: 10
+batch_size: 6
+epochs: 100

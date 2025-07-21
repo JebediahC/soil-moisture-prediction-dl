@@ -5,3 +5,5 @@ src/__pycache__/
 soil_conv_lstm-2.pth
 soil_conv_lstm.pth
 logs/*
+params/*
+runs/*

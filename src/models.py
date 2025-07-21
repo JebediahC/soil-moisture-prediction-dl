@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import utils
+from . import utils
 
 config = utils.load_config()
 
