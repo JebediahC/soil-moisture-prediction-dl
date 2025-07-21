@@ -1,3 +1,4 @@
+import os
 import yaml
 
 DEBUG = True  # Set this to True to enable debug logs
@@ -24,7 +25,8 @@ class Logger:
         self.to_console = to_console
         self.debug = debug
         if log_path:
-            self.log_file = open(log_path, "a")
+            mode = "a" if os.path.exists(log_path) else "w"
+            self.log_file = open(log_path, mode)
         else:
             self.log_file = None
 
