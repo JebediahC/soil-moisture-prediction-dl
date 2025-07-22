@@ -1,5 +1,6 @@
 model: empty_model
-per_year_outputs_path: "/mnt/c/Users/jebediahc/OneDrive/鱼丸车仔/TUM-before-arrival/Project\ Earth\ Observation\ Data\ Analysis/Project-files-Soil-Moisture/per_year_outputs/"
+model_type: "3dcnn_lstm_lite"  # 可选: "convlstm", "3dcnn_lstm", "3dcnn_lstm_lite", "3dcnn_lstm_micro"
+per_year_outputs_path: ""
 date: "2020-01-15"
 
 raw_path: "please_specify_raw_path"
@@ -18,9 +19,6 @@ months:
   - "2020-2"
   - "2020-3"
   - "2020-4"
-  - "2020-5"
-  - "2020-6"
-  - "2020-7"
 
 
 run_name: "test-untiled"
@@ -34,5 +32,5 @@ use_channels:
   - "tp"
 input_days: 20
 predict_days: 10
-batch_size: 0
-epochs: 100
+batch_size: 2
+epochs: 10

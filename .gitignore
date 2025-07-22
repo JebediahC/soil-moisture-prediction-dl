@@ -7,3 +7,4 @@ soil_conv_lstm.pth
 logs/*
 params/*
 runs/*
+!logs/

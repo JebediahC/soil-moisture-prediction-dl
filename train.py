@@ -192,15 +192,36 @@ print(xy_combined.shape)
 
 
 # --- STEP 7-1: TRAINING LOOP part 1 ---
-from src.models import ConvLSTM
+from src.models import ConvLSTM, CNN3D_LSTM, CNN3D_LSTM_Lite, CNN3D_LSTM_Micro, get_model
 from torch.utils.tensorboard import SummaryWriter
 import os
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = ConvLSTM(input_dim=len(config["use_channels"])).to(device)
 
-# 1. 显示模型结构
-print(model)
+# 使用配置文件中的模型类型创建模型
+model_type = config.get("model_type", "convlstm")  # 默认使用convlstm
+print(f"Using model type: {model_type}")
+
+if model_type.lower() == "convlstm":
+    model = ConvLSTM(input_dim=len(config["use_channels"])).to(device)
+elif model_type.lower() == "3dcnn_lstm":
+    model = CNN3D_LSTM(input_dim=len(config["use_channels"])).to(device)
+elif model_type.lower() == "3dcnn_lstm_lite":
+    model = CNN3D_LSTM_Lite(input_dim=len(config["use_channels"])).to(device)
+elif model_type.lower() == "3dcnn_lstm_micro":
+    model = CNN3D_LSTM_Micro(input_dim=len(config["use_channels"])).to(device)
+else:
+    # 使用工厂函数创建模型
+    model = get_model(model_type, input_dim=len(config["use_channels"])).to(device)
+    logger.warning(f"Using factory function to create model of type: {model_type}")
+
+logger.info(f"Created model of type: {model_type}")
+
+# 1. 显示模型结构和参数量
+total_params = sum(p.numel() for p in model.parameters())
+print(f"Model: {model}")
+print(f"Total parameters: {total_params:,d} ({total_params/1e6:.2f}M)")
+print(f"Model device: {device}")
 
 
 import datetime
@@ -213,7 +234,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 criterion = nn.MSELoss(reduction='none')  # 用于mask后再mean
 
 # TensorBoard writer
-writer = SummaryWriter(log_dir=f"runs/soil_conv_lstm_{run_name}")
+writer = SummaryWriter(log_dir=f"runs/{model_type}_{run_name}")
 
 # Early stopping参数
 best_val_loss = float('inf')
@@ -264,7 +285,7 @@ for epoch in range(config["epochs"]):
         best_val_loss = avg_val_loss
         patience_counter = 0
         timestamp = datetime.datetime.now().strftime("%Y%m%d")
-        save_path = os.path.join("params", f"soil_conv_lstm_best_{timestamp}_{run_name}.pth")
+        save_path = os.path.join("params", f"{model_type}_best_{timestamp}_{run_name}.pth")
         torch.save(model.state_dict(), save_path)
         print(f"Best model saved to {save_path}")
     else:
@@ -274,7 +295,7 @@ for epoch in range(config["epochs"]):
             break
     # 定期保存检查点
     if (epoch + 1) % 5 == 0:
-        checkpoint_path = os.path.join("params", f"soil_conv_lstm_{timestamp}_{run_name}_epoch{epoch+1}.pth")
+        checkpoint_path = os.path.join("params", f"{model_type}_{timestamp}_{run_name}_epoch{epoch+1}.pth")
         torch.save(model.state_dict(), checkpoint_path)
         print(f"Checkpoint saved to {checkpoint_path}")
 
@@ -285,3 +306,22 @@ def load_model(model, path="soil_conv_lstm.pth", device='cpu'):
     model.load_state_dict(torch.load(path, map_location=device))
     print(f"Model loaded from {path}")
     return model
+
+
+def create_model_from_config(model_type=None, input_dim=None):
+    """
+    根据配置创建模型的便捷函数
+    
+    Args:
+        model_type: 模型类型，如果为None则从config读取
+        input_dim: 输入维度，如果为None则从config计算
+    
+    Returns:
+        创建的模型实例
+    """
+    if model_type is None:
+        model_type = config.get("model_type", "convlstm")
+    if input_dim is None:
+        input_dim = len(config["use_channels"])
+    
+    return get_model(model_type, input_dim)
